@@ -14,14 +14,20 @@ function App() {
 
 
   React.useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      setLoading(false)
-      console.log(user);
-      if(user) {
-        setUser(user)
-      }
-    })
-  }, []);
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setLoading(false);
+    console.log(user);
+    if (user) {
+      setUser(user);
+    } else {
+      setUser({}); // Reset to empty object when logged out
+    }
+  });
+
+  return () => unsubscribe(); // Clean up listener on unmount
+}, []);
+
+
   function register() {
     console.log('register');
     createUserWithEmailAndPassword(auth,'email@email.com', 'test123')
@@ -45,8 +51,13 @@ function App() {
   }
 
   function logout() {
-    signOut(auth);
-    setUser({});
+    signOut(auth)
+    .then(() => {
+      setUser({})  // Clear the user state on logout
+    })
+    .catch((error) => {
+      console.log(error);
+    });
   }
 
 
@@ -55,7 +66,7 @@ function App() {
    <button onClick={login}>Login</button> 
    <button onClick={logout} >Logout</button>
    {user.email}
-   {loading ? 'loading...' : user.email}
+   {user && user.email ? <span>{user.email}</span> : <span>Loading...</span>}
     </div>;
 }
 
